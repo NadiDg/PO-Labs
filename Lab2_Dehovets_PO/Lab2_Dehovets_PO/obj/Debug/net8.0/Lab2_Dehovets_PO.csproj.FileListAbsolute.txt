@@ -1,0 +1,15 @@
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\bin\Debug\net8.0\Lab2_Dehovets_PO.exe
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\bin\Debug\net8.0\Lab2_Dehovets_PO.deps.json
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\bin\Debug\net8.0\Lab2_Dehovets_PO.runtimeconfig.json
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\bin\Debug\net8.0\Lab2_Dehovets_PO.dll
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\bin\Debug\net8.0\Lab2_Dehovets_PO.pdb
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\Lab2_Dehovets_PO.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\Lab2_Dehovets_PO.AssemblyInfoInputs.cache
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\Lab2_Dehovets_PO.AssemblyInfo.cs
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\Lab2_Dehovets_PO.csproj.CoreCompileInputs.cache
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\Lab2_Dehovets_PO.sourcelink.json
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\Lab2_Dehovets_PO.dll
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\refint\Lab2_Dehovets_PO.dll
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\Lab2_Dehovets_PO.pdb
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\Lab2_Dehovets_PO.genruntimeconfig.cache
+C:\Users\Админ\Desktop\ПО лаби\PO-Labs\Lab2_Dehovets_PO\Lab2_Dehovets_PO\obj\Debug\net8.0\ref\Lab2_Dehovets_PO.dll
