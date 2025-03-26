@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 
 class Program{
-
     static int[] GenerateArray(int size)
     {
         Random rand = new Random();
@@ -12,7 +11,7 @@ class Program{
         }
         return array;
     }
-    
+
     static void SumEven(int[] array)
     {
         long sum = 0;
@@ -32,7 +31,7 @@ class Program{
                 minEven = num;
         }
     }
-    
+
     static void SumEvenLock(int[] array, int threadCount)
     {
         long sum = 0;
@@ -59,7 +58,7 @@ class Program{
         }
         foreach (var thread in threads) thread.Join();
     }
-    
+
     static void MinEvenLock(int[] array, int threadCount)
     {
         int minEven = int.MaxValue;
@@ -87,13 +86,70 @@ class Program{
         foreach (var thread in threads) thread.Join();
     }
 
+    static void SumEvenAtomic(int[] array, int threadCount)
+    {
+        long sum = 0;
+        int chunkSize = array.Length / threadCount;
+        Thread[] threads = new Thread[threadCount];
+
+        for (int t = 0; t < threadCount; t++)
+        {
+            int start = t * chunkSize;
+            int end = (t == threadCount - 1) ? array.Length : start + chunkSize;
+
+            threads[t] = new Thread(() =>
+            {
+                long localSum = 0;
+                for (int i = start; i < end; i++)
+                {
+                    if (array[i] % 2 == 0)
+                        localSum += array[i];
+                }
+                Interlocked.Add(ref sum, localSum);
+            });
+            threads[t].Start();
+        }
+        foreach (var thread in threads) thread.Join();
+    }
+
+    static void MinEvenAtomic(int[] array, int threadCount)
+    {
+        int minEven = int.MaxValue;
+        int chunkSize = array.Length / threadCount;
+        Thread[] threads = new Thread[threadCount];
+
+        for (int t = 0; t < threadCount; t++)
+        {
+            int start = t * chunkSize;
+            int end = (t == threadCount - 1) ? array.Length : start + chunkSize;
+
+            threads[t] = new Thread(() =>
+            {
+                for (int i = start; i < end; i++)
+                {
+                    if (array[i] % 2 == 0)
+                    {
+                        int currentMin;
+                        do
+                        {
+                            currentMin = minEven;
+                            if (array[i] >= currentMin) break;
+                        } while (Interlocked.CompareExchange(ref minEven, array[i], currentMin) != currentMin);
+                    }
+                }
+            });
+            threads[t].Start();
+        }
+        foreach (var thread in threads) thread.Join();
+    }
+
     static void Main()
     {
         Console.Write("Введіть розмір масиву: ");
         int size = int.Parse(Console.ReadLine());
         Console.Write("Введіть кількість потоків: ");
         int threadCount = int.Parse(Console.ReadLine());
-        
+
         int[] array = GenerateArray(size);
 
         Stopwatch stopwatch = new Stopwatch();
@@ -101,23 +157,31 @@ class Program{
         stopwatch.Start();
         SumEven(array);
         stopwatch.Stop();
-        Console.WriteLine($"Пошук суми парних елементів (без використання паралелізації): {stopwatch.ElapsedMilliseconds} мс");
+        Console.WriteLine($"Пошук суми парних елементів (без паралелізації): {stopwatch.ElapsedMilliseconds} мс");
 
-        stopwatch.Start();
+        stopwatch.Restart();
         MinEven(array);
         stopwatch.Stop();
-        Console.WriteLine($"Пошук найменшого парного (без використання паралелізації): {stopwatch.ElapsedMilliseconds} мс");
-        
+        Console.WriteLine($"Пошук найменшого парного елемента (без паралелізації): {stopwatch.ElapsedMilliseconds} мс");
+
         stopwatch.Restart();
         SumEvenLock(array, threadCount);
         stopwatch.Stop();
-        Console.WriteLine($"Пошук суми парних (з блокуванням): {stopwatch.ElapsedMilliseconds} мс");
+        Console.WriteLine($"Пошук суми парних елементів(з блокуванням): {stopwatch.ElapsedMilliseconds} мс");
 
         stopwatch.Restart();
         MinEvenLock(array, threadCount);
         stopwatch.Stop();
-        Console.WriteLine($"Пошук найменшого парного (з блокуванням): {stopwatch.ElapsedMilliseconds} мс");
-        
-        
+        Console.WriteLine($"Пошук найменшого парного елемента (з блокуванням): {stopwatch.ElapsedMilliseconds} мс");
+
+        stopwatch.Restart();
+        SumEvenAtomic(array, threadCount);
+        stopwatch.Stop();
+        Console.WriteLine($"Пошук суми парних елементів (атомарно): {stopwatch.ElapsedMilliseconds} мс");
+
+        stopwatch.Restart();
+        MinEvenAtomic(array, threadCount);
+        stopwatch.Stop();
+        Console.WriteLine($"Пошук найменшого парного (атомарно): {stopwatch.ElapsedMilliseconds} мс");
     }
 }
