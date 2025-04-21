@@ -1,4 +1,5 @@
-﻿
+﻿using System.Diagnostics;
+
 class TaskItem
 {
     public int Id { get; set; }
@@ -60,10 +61,101 @@ class ThreadQueue
 
     public int Count => queue.Count;
 
-  
+    public void ResetMinFillTime()
+    {
+        if (MinFillTimeMs == int.MaxValue)
+        {
+            MinFillTimeMs = 0;
+        }
+    }
 }
 
+class CustomThreadPool
+{
+    private readonly ThreadQueue queue1 = new(10);
+    private readonly ThreadQueue queue2 = new(10);
+    private readonly List<Thread> workers = new();
+    private bool isRun = true;
+    private int taskCounter = 0;
+    private int rejectedTasks = 0;
+    private Random random = new();
+    private List<double> executionTimes = new();
+    private List<double> waitTimes = new();
 
+    public void Start()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            int queueIndex = i % 2 + 1;
+            var thread = new Thread(() => Worker(queueIndex));
+            thread.Start();
+            workers.Add(thread);
+        }
+    }
+
+    private void Worker(int queueIndex)
+    {
+        while (isRun)
+        {
+            TaskItem task;
+            if (queueIndex == 1)
+                task = queue1.Dequeue();
+            else
+                task = queue2.Dequeue();
+
+            if (task != null)
+            {
+                var wait = (DateTime.Now - task.EnqueuedTime).TotalMilliseconds;
+                waitTimes.Add(wait);
+                var sw = Stopwatch.StartNew();
+                Console.WriteLine($"Завдання #{task.Id} розпочато у черзі {queueIndex} на {task.Duration}s (очікувало {wait:F0}мс)");
+                Thread.Sleep(task.Duration * 1000);
+                sw.Stop();
+                executionTimes.Add(sw.Elapsed.TotalMilliseconds);
+                Console.WriteLine($"Завдання #{task.Id} завершено у черзі {queueIndex} після {sw.Elapsed.TotalSeconds:F2}s");
+            }
+            else
+            {
+                Thread.Sleep(100);
+            }
+        }
+    }
+
+    public void EnqueueTask()
+    {
+        var task = new TaskItem
+        {
+            Id = Interlocked.Increment(ref taskCounter),
+            Duration = random.Next(4, 11),
+            EnqueuedTime = DateTime.Now
+        };
+
+        bool add;
+
+        if (queue1.Count < queue2.Count)
+            add = queue1.TryEnqueue(task);
+        else if (queue2.Count < queue1.Count)
+            add = queue2.TryEnqueue(task);
+        else
+            add = queue1.TryEnqueue(task) || queue2.TryEnqueue(task);
+
+        if (!add)
+        {
+            Interlocked.Increment(ref rejectedTasks);
+            Console.WriteLine($"Завдання #{task.Id} відхилено");
+        }
+    }
+
+    public void Stop()
+    {
+        isRun = false;
+        foreach (var worker in workers)
+        {
+            worker.Join();
+        }
+    }
+    
+}
 
 class Program
 {
