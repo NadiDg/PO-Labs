@@ -130,7 +130,7 @@ class CustomThreadPool
             EnqueuedTime = DateTime.Now
         };
 
-        bool add;
+        bool add = false;
 
         if (queue1.Count < queue2.Count)
             add = queue1.TryEnqueue(task);
@@ -154,13 +154,51 @@ class CustomThreadPool
             worker.Join();
         }
     }
-    
+
+    public void PrintStats()
+    {
+        queue1.ResetMinFillTime();
+        queue2.ResetMinFillTime();
+
+        Console.WriteLine("\nСтатистика:");
+        Console.WriteLine($"Відхилені завдання: {rejectedTasks}");
+        Console.WriteLine($"Макс. час заповнення черги 1: {queue1.MaxFillTimeMs}мс");
+        Console.WriteLine($"Мін. час заповнення черги 1: {queue1.MinFillTimeMs}мс");
+        Console.WriteLine($"Макс. час заповнення черги 2: {queue2.MaxFillTimeMs}мс");
+        Console.WriteLine($"Мін. час заповнення черги 2: {queue2.MinFillTimeMs}мс");
+        Console.WriteLine($"Середній час очікування: {waitTimes.DefaultIfEmpty(0).Average():F2} мс");
+        Console.WriteLine($"Середній час виконання: {executionTimes.DefaultIfEmpty(0).Average():F2} мс");
+    }
 }
 
 class Program
 {
     static void Main()
     {
-        
+        var pool = new CustomThreadPool();
+        pool.Start();
+
+        var generatorThreads = new List<Thread>();
+
+        for (int i = 0; i < 3; i++)
+        {
+            var t = new Thread(() =>
+            {
+                for (int j = 0; j < 20; j++)
+                {
+                    pool.EnqueueTask();
+                    Thread.Sleep(new Random().Next(400, 800));
+                }
+            });
+            generatorThreads.Add(t);
+            t.Start();
+        }
+
+        foreach (var t in generatorThreads)
+            t.Join();
+
+        Thread.Sleep(10000);
+        pool.Stop();
+        pool.PrintStats();
     }
 }
