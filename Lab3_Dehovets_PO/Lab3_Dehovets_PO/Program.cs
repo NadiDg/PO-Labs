@@ -3,7 +3,7 @@
 class TaskItem
 {
     public int Id { get; set; }
-    public int Duration { get; set; } 
+    public int Duration { get; set; }
     public DateTime EnqueuedTime { get; set; }
 }
 
@@ -32,6 +32,7 @@ class ThreadQueue
                 {
                     fullStartTime = DateTime.Now;
                 }
+                Monitor.Pulse(lockObj);
                 return true;
             }
             else
@@ -52,10 +53,11 @@ class ThreadQueue
     {
         lock (lockObj)
         {
-            if (queue.Count > 0)
-                return queue.Dequeue();
-            else
-                return null;
+            while (queue.Count == 0)
+            {
+                Monitor.Wait(lockObj);
+            }
+            return queue.Dequeue();
         }
     }
 
@@ -75,12 +77,14 @@ class CustomThreadPool
     private readonly ThreadQueue queue1 = new(10);
     private readonly ThreadQueue queue2 = new(10);
     private readonly List<Thread> workers = new();
-    private bool isRun = true;
+    private volatile bool isRun = true;
+    private volatile bool isPaused = false;
+    private readonly object pauseLock = new();
     private int taskCounter = 0;
     private int rejectedTasks = 0;
-    private Random random = new();
-    private List<double> executionTimes = new();
-    private List<double> waitTimes = new();
+    private readonly Random random = new();
+    private readonly List<double> executionTimes = new();
+    private readonly List<double> waitTimes = new();
 
     public void Start()
     {
@@ -97,26 +101,25 @@ class CustomThreadPool
     {
         while (isRun)
         {
-            TaskItem task;
-            if (queueIndex == 1)
-                task = queue1.Dequeue();
-            else
-                task = queue2.Dequeue();
+            lock (pauseLock)
+            {
+                while (isPaused)
+                {
+                    Monitor.Wait(pauseLock);
+                }
+            }
 
+            TaskItem task = queueIndex == 1 ? queue1.Dequeue() : queue2.Dequeue();
             if (task != null)
             {
                 var wait = (DateTime.Now - task.EnqueuedTime).TotalMilliseconds;
-                waitTimes.Add(wait);
+                lock (waitTimes) waitTimes.Add(wait);
                 var sw = Stopwatch.StartNew();
                 Console.WriteLine($"Завдання #{task.Id} розпочато у черзі {queueIndex} на {task.Duration}s (очікувало {wait:F0}мс)");
                 Thread.Sleep(task.Duration * 1000);
                 sw.Stop();
-                executionTimes.Add(sw.Elapsed.TotalMilliseconds);
+                lock (executionTimes) executionTimes.Add(sw.Elapsed.TotalMilliseconds);
                 Console.WriteLine($"Завдання #{task.Id} завершено у черзі {queueIndex} після {sw.Elapsed.TotalSeconds:F2}s");
-            }
-            else
-            {
-                Thread.Sleep(100);
             }
         }
     }
@@ -146,9 +149,44 @@ class CustomThreadPool
         }
     }
 
+    public void Pause()
+    {
+        lock (pauseLock)
+        {
+            isPaused = true;
+            Console.WriteLine("Пул потоків призупинено.");
+        }
+    }
+
+    public void Resume()
+    {
+        lock (pauseLock)
+        {
+            isPaused = false;
+            Monitor.PulseAll(pauseLock);
+            Console.WriteLine("Пул потоків відновлено.");
+        }
+    }
+
+    public void TogglePauseResume()
+    {
+        lock (pauseLock)
+        {
+            if (isPaused) Resume();
+            else Pause();
+        }
+    }
+
     public void Stop()
     {
         isRun = false;
+        lock (queue1)
+            Monitor.PulseAll(queue1);
+        lock (queue2)
+            Monitor.PulseAll(queue2);
+        lock (pauseLock)
+            Monitor.PulseAll(pauseLock);
+
         foreach (var worker in workers)
         {
             worker.Join();
@@ -193,6 +231,20 @@ class Program
             generatorThreads.Add(t);
             t.Start();
         }
+
+        var keyboardListener = new Thread(() =>
+        {
+            while (true)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Spacebar)
+                {
+                    pool.TogglePauseResume();
+                }
+            }
+        });
+        keyboardListener.IsBackground = true;
+        keyboardListener.Start();
 
         foreach (var t in generatorThreads)
             t.Join();
