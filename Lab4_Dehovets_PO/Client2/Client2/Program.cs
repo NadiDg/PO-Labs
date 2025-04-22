@@ -16,8 +16,8 @@ class Client
 
         NetworkStream stream = client.GetStream();
 
-        int size = 10000;
-        int threadsCount = 2;
+        int size = 500;
+        int threadsCount = 4;
         Random rand = new Random();
         double[] matrix1 = new double[size * size];
         double[] matrix2 = new double[size * size];
